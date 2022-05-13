@@ -18239,7 +18239,8 @@ Perhaps we should describe a competiton as <em>consistantly over average</em> if
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<h2 id="Ranking-Competitions">Ranking Competitions<a class="anchor-link" href="#Ranking-Competitions">&#182;</a></h2>
+<h2 id="Ranking-Competitions">Ranking Competitions<a class="anchor-link" href="#Ranking-Competitions">&#182;</a></h2><p>Lets try to rank these competitions that had average times higher than expected. We can rank the competitons by the difference between their average and the annual average. However since a competiton can occur multiple times over multiple years we can normalize those differences and take an average to get a metric of how far each competition is above average. We can then rank by that value.</p>
+
 </div>
 </div>
 </div>
@@ -18401,9 +18402,7 @@ Perhaps we should describe a competiton as <em>consistantly over average</em> if
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<h3 id="Actual-ranks">Actual ranks<a class="anchor-link" href="#Actual-ranks">&#182;</a></h3><p>Now lets evaluate how far above average a competition is by how far its mean value was from the expected annual mean. 
-<br>
-We can then rank competitions by their average distance from the annual mean.</p>
+<h3 id="Actual-ranks">Actual ranks<a class="anchor-link" href="#Actual-ranks">&#182;</a></h3><p>Now lets evaluate how far above average a competition is by how far its mean value was from the expected annual mean. Because competitions occur in multiple years, we will normalize this distance and then average the normalized distances to get one distance metric for each competition.</p>
 <blockquote><p><strong>Note</strong>
 <br>
 We will not be considering the amount of times a competition was over average when ranking. Essentially we are treating everything that was over average 3 times or more as one large group.</p>
@@ -18428,10 +18427,15 @@ We will not be considering the amount of times a competition was over average wh
 <span class="n">ranks</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">()</span>
 <span class="n">ranks</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">consistantly_over</span><span class="p">[</span><span class="s1">&#39;repeated_name&#39;</span><span class="p">]</span>
 <span class="n">ranks</span><span class="p">[</span><span class="s1">&#39;diff&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">diff</span>
+<span class="n">ranks</span><span class="p">[</span><span class="s1">&#39;year&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">consistantly_over</span><span class="p">[</span><span class="s1">&#39;year&#39;</span><span class="p">]</span>
+
+<span class="c1"># normalizing by year</span>
+<span class="n">max_per_year</span> <span class="o">=</span> <span class="n">ranks</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;year&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">agg</span><span class="p">({</span><span class="s1">&#39;diff&#39;</span><span class="p">:</span> <span class="nb">max</span><span class="p">})[</span><span class="s1">&#39;diff&#39;</span><span class="p">]</span>
+<span class="n">ranks</span><span class="p">[</span><span class="s1">&#39;normalized_diff&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">ranks</span><span class="p">[</span><span class="s1">&#39;diff&#39;</span><span class="p">]</span> <span class="o">/</span> <span class="n">ranks</span><span class="p">[</span><span class="s1">&#39;year&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">max_per_year</span><span class="p">)</span>
 
 <span class="c1"># getting the average difference per competition</span>
-<span class="n">ranks</span> <span class="o">=</span> <span class="n">ranks</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;name&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">agg</span><span class="p">(</span><span class="s1">&#39;mean&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">reset_index</span><span class="p">()</span>
-<span class="n">ranks</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">columns</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;diff&#39;</span><span class="p">:</span> <span class="s1">&#39;average_diff&#39;</span><span class="p">},</span> <span class="n">inplace</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span>
+<span class="n">ranks</span> <span class="o">=</span> <span class="n">ranks</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;name&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">agg</span><span class="p">({</span><span class="s1">&#39;normalized_diff&#39;</span><span class="p">:</span> <span class="s1">&#39;mean&#39;</span><span class="p">})</span><span class="o">.</span><span class="n">reset_index</span><span class="p">()</span>
+<span class="n">ranks</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">columns</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;normalized_diff&#39;</span><span class="p">:</span> <span class="s1">&#39;average_diff&#39;</span><span class="p">},</span> <span class="n">inplace</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span>
 <span class="n">display</span><span class="p">(</span><span class="n">ranks</span><span class="o">.</span><span class="n">head</span><span class="p">())</span>
 </pre></div>
 
@@ -18481,27 +18485,27 @@ We will not be considering the amount of times a competition was over average wh
     <tr>
       <th>0</th>
       <td>AZCubing Summer</td>
-      <td>238.595674</td>
+      <td>0.084463</td>
     </tr>
     <tr>
       <th>1</th>
       <td>Aachen Open</td>
-      <td>687.362143</td>
+      <td>0.094974</td>
     </tr>
     <tr>
       <th>2</th>
       <td>Adelaide Summer</td>
-      <td>455.979999</td>
+      <td>0.237052</td>
     </tr>
     <tr>
       <th>3</th>
       <td>Anaadyanta Cube Open</td>
-      <td>491.563333</td>
+      <td>0.161754</td>
     </tr>
     <tr>
       <th>4</th>
       <td>Andorra</td>
-      <td>498.123725</td>
+      <td>0.151549</td>
     </tr>
   </tbody>
 </table>
@@ -18562,7 +18566,8 @@ We will not be considering the amount of times a competition was over average wh
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># veiwing the top 5 farthest over average</span>
-<span class="n">display</span><span class="p">(</span><span class="n">ranks</span><span class="p">[</span><span class="n">ranks</span><span class="p">[</span><span class="s1">&#39;rank&#39;</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="mi">5</span><span class="p">]</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="n">by</span> <span class="o">=</span> <span class="s1">&#39;rank&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="s1">&#39;rank&#39;</span><span class="p">))</span>
+<span class="n">display</span><span class="p">(</span><span class="n">ranks</span><span class="p">[</span><span class="n">ranks</span><span class="p">[</span><span class="s1">&#39;rank&#39;</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="mi">5</span><span class="p">]</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span>
+    <span class="n">by</span> <span class="o">=</span> <span class="s1">&#39;rank&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="s1">&#39;rank&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="s1">&#39;average_diff&#39;</span><span class="p">,</span> <span class="n">axis</span> <span class="o">=</span> <span class="mi">1</span><span class="p">))</span>
 </pre></div>
 
      </div>
@@ -18604,11 +18609,9 @@ We will not be considering the amount of times a competition was over average wh
     <tr style="text-align: right;">
       <th></th>
       <th>name</th>
-      <th>average_diff</th>
     </tr>
     <tr>
       <th>rank</th>
-      <th></th>
       <th></th>
     </tr>
   </thead>
@@ -18616,27 +18619,22 @@ We will not be considering the amount of times a competition was over average wh
     <tr>
       <th>1</th>
       <td>Dubai Open</td>
-      <td>4597.582891</td>
     </tr>
     <tr>
       <th>2</th>
-      <td>Tunisia Spring Open</td>
-      <td>3309.806693</td>
+      <td>Pragyan Cube Open</td>
     </tr>
     <tr>
       <th>3</th>
-      <td>Pragyan Cube Open</td>
-      <td>3081.368127</td>
+      <td>Tunisia Spring Open</td>
     </tr>
     <tr>
       <th>4</th>
-      <td>Tunisia Winter Open</td>
-      <td>2795.068658</td>
+      <td>Fecap Open</td>
     </tr>
     <tr>
       <th>5</th>
-      <td>Santarém Open</td>
-      <td>2401.794711</td>
+      <td>Tunisia Autumn Open</td>
     </tr>
   </tbody>
 </table>
@@ -18653,14 +18651,16 @@ We will not be considering the amount of times a competition was over average wh
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<h1 id="These-are">These are<a class="anchor-link" href="#These-are">&#182;</a></h1>
+<p>By our metrics these are the top 5 competitions that are the "most" above our expected values.</p>
+
 </div>
 </div>
 </div>
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<h2 id="Discussion">Discussion<a class="anchor-link" href="#Discussion">&#182;</a></h2>
+<h1 id="Discussion">Discussion<a class="anchor-link" href="#Discussion">&#182;</a></h1><p>At the very beggining of our analysis we set out to find any speed solving competitions that are harder than others. We originally defined "hardness" by the average solving time for a competition with the assumption that if it takes longer to solve a Rubik's Cube then it must be more difficult. We found almost 2,000 competitions that were statistically "harder" than we expected. We then found the top 5 competitions that were by our definition "hardest." However, claiming that these competitions are the hardest may not be correct. There are many reasons that a competition may not have times higher than expected. One major reason is that a competition can have a large population of beginners who can pull the average for that competition up. We may not have actually found the hardest competitions but we did find those that were the farthest from our expected ranks. Whether or not these competitions are the hardest requires more analysis with additional information like competitor experience.</p>
+
 </div>
 </div>
 </div>
@@ -18669,6 +18669,8 @@ We will not be considering the amount of times a competition was over average wh
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
 <h2 id="What-did-we-learn?">What did we learn?<a class="anchor-link" href="#What-did-we-learn?">&#182;</a></h2><h4 id="Data-Science-is-90%25-getting-and-cleaning-data">Data Science is 90% getting and cleaning data<a class="anchor-link" href="#Data-Science-is-90%25-getting-and-cleaning-data">&#182;</a></h4><p>We spent a lot of time just understanding the database, getting our tables, removing unnecessary data, pivoting our tables, etc. A majority of Data Science is just making the large amounts of data easier to work with. Once we do that applying the tools is a piece of cake.</p>
 <h4 id="How-to-deal-with-missing-values">How to deal with missing values<a class="anchor-link" href="#How-to-deal-with-missing-values">&#182;</a></h4><p>When we originally got our data there was a lot of missing data. A lot of the data was stuff we should not and could not ignore. We figured out how to substitute those missing values and improve our analysis.</p>
+<h4 id="How-to-visualize-and-understand-our-data">How to visualize and understand our data<a class="anchor-link" href="#How-to-visualize-and-understand-our-data">&#182;</a></h4><p>Throughout this tutorial we created multiple plots that helped us get a sense of what our data looked like. This type of understanding is not always aparent from looking at a table. The use of scatter plots, line graphs, histograms, and violin plots helped us gain this important visual understanding.</p>
+<h4 id="How-to-perform-a-statistical-analysis">How to perform a statistical analysis<a class="anchor-link" href="#How-to-perform-a-statistical-analysis">&#182;</a></h4><p>We then wrote some code to perform a statistical analysis on our data to find out if anything was significant.</p>
 
 </div>
 </div>
